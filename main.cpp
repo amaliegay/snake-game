@@ -2,7 +2,6 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <deque>
-#include <cstring>
 
 using namespace std;
 
@@ -53,15 +52,16 @@ public:
 	Vector2 directionInit = {1, 0};
 	Vector2 direction = directionInit;
 	bool bodyGrows = false;
+	bool running = true;
 
-	void Draw()
+	void Draw(bool gameRunning)
 	{
 		for (unsigned i = 0; i < body.size(); i++)
 		{
 			Vector2 position = body[i];
 			float offset = borderAllSides;
 			Rectangle segment = Rectangle{offset + (float)position.x * cellSize, offset + (float)position.y * cellSize, cellSize, cellSize};
-			DrawRectangleRounded(segment, 0.5, 6, WHITE);
+			DrawRectangleRounded(segment, 0.5, 6, gameRunning ? WHITE : GRAY);
 		}
 	}
 
@@ -122,10 +122,10 @@ public:
 		return position;
 	};
 
-	void Draw()
+	void Draw(bool gameRunning)
 	{
 		float offset = borderAllSides;
-		DrawRectangle(offset + position.x * cellSize, offset + position.y * cellSize, cellSize, cellSize, WHITE);
+		DrawRectangle(offset + position.x * cellSize, offset + position.y * cellSize, cellSize, cellSize, gameRunning ? WHITE : GRAY);
 	};
 };
 
@@ -138,12 +138,14 @@ public:
 	int score = 0;
 	Sound eatSound;
 	Sound wallSound;
+	Music music;
 
 	Game()
 	{
 		InitAudioDevice();
-		eatSound = LoadSound("Sound/eat.mp3");
-		wallSound = LoadSound("Sound/wall.mp3");
+		music = LoadMusicStream("Music/Snake Game.wav");
+		eatSound = LoadSound("Sound/eat.wav");
+		wallSound = LoadSound("Sound/wall.wav");
 	}
 	~Game()
 	{
@@ -154,8 +156,8 @@ public:
 
 	void Draw()
 	{
-		food.Draw();
-		snake.Draw();
+		food.Draw(gameRunning);
+		snake.Draw(gameRunning);
 	}
 	void CheckCollisionWithEdges()
 	{
@@ -181,7 +183,7 @@ public:
 		snake.SetToLastPosition();
 		cout << "Game Over!" << endl;
 		gameRunning = false;
-		score = 0;
+		// score = 0;
 	}
 	void CheckCollisionWithFood()
 	{
@@ -223,31 +225,38 @@ int main()
 			game.Update();
 		}
 
-		if (IsKeyPressed(KEY_UP) && game.snake.direction.y != 1)
-		{
-			game.snake.direction = {0, -1};
-		}
-		if (IsKeyPressed(KEY_DOWN) && game.snake.direction.y != -1)
-		{
-			game.snake.direction = {0, 1};
-		}
-		if (IsKeyPressed(KEY_LEFT) && game.snake.direction.x != 1)
-		{
-			game.snake.direction = {-1, 0};
-		}
-		if (IsKeyPressed(KEY_RIGHT) && game.snake.direction.x != -1)
-		{
-			game.snake.direction = {1, 0};
-		}
-
-		ClearBackground(BLACK);
 		int border = 4;
-		DrawRectangleLinesEx(Rectangle{borderAllSides - border, borderAllSides - border, cellCount * cellSize + 2 * border, cellCount * cellSize + 2 * border}, border, WHITE);
-		int fontSize = 30;
-		DrawText("Snake Game", borderAllSides - border, 2, fontSize, WHITE);
-		const char *scoreString = TextFormat("%i", game.score);
-		DrawText(scoreString, cellCount * cellSize + borderAllSides - strlen(scoreString) * (fontSize - 20), 2, fontSize, WHITE);
-		game.Draw();
+		DrawRectangleLinesEx(Rectangle{borderAllSides - border, borderAllSides - border, cellCount * cellSize + 2 * border, cellCount * cellSize + 2 * border}, border, game.gameRunning ? WHITE : GRAY);
+		int fontSize = 28;
+		DrawText("Snake Game", borderAllSides - border, 4, fontSize, game.gameRunning ? WHITE : GRAY);
+		const char *scoreString = TextFormat("Score: %i", game.score);
+		DrawText(scoreString, borderAllSides - border, borderAllSides + border + (cellCount * cellSize), fontSize, game.gameRunning ? WHITE : GRAY);
+
+		if (game.gameRunning)
+		{
+			if (IsKeyPressed(KEY_UP) && game.snake.direction.y != 1)
+			{
+				game.snake.direction = {0, -1};
+			}
+			if (IsKeyPressed(KEY_DOWN) && game.snake.direction.y != -1)
+			{
+				game.snake.direction = {0, 1};
+			}
+			if (IsKeyPressed(KEY_LEFT) && game.snake.direction.x != 1)
+			{
+				game.snake.direction = {-1, 0};
+			}
+			if (IsKeyPressed(KEY_RIGHT) && game.snake.direction.x != -1)
+			{
+				game.snake.direction = {1, 0};
+			}
+			ClearBackground(BLACK);
+			game.Draw();
+		}
+		else
+		{
+			DrawText("Game Over", borderAllSides + (cellCount * cellSize) / 2 - 80, borderAllSides + (cellCount * cellSize) / 2 - 32, 32, WHITE);
+		}
 
 		EndDrawing();
 	}
