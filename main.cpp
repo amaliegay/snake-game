@@ -46,7 +46,7 @@ bool OutOfBound(Vector2 position)
 class Snake
 {
 public:
-	deque<Vector2> bodyInit = {Vector2{6, 6}, Vector2{5, 6}, Vector2{4, 6}};
+	deque<Vector2> bodyInit = {Vector2{2, 1}, Vector2{1, 1}, Vector2{0, 1}};
 	deque<Vector2> body = bodyInit;
 	deque<Vector2> bodyLastPosition = body;
 	Vector2 directionInit = {1, 0};
@@ -138,18 +138,23 @@ public:
 	int score = 0;
 	Sound eatSound;
 	Sound wallSound;
+	Sound tailSound;
 	Music music;
 
 	Game()
 	{
 		InitAudioDevice();
-		music = LoadMusicStream("Music/Snake Game.wav");
 		eatSound = LoadSound("Sound/eat.wav");
 		wallSound = LoadSound("Sound/wall.wav");
+		tailSound = LoadSound("Sound/tail.wav");
+		music = LoadMusicStream("Music/Snake Game.wav");
+		PlayMusicStream(music);
+		SetMusicVolume(music, 0.5);
 	}
 	~Game()
 	{
 		UnloadSound(eatSound);
+		UnloadSound(tailSound);
 		UnloadSound(wallSound);
 		CloseAudioDevice();
 	}
@@ -173,6 +178,7 @@ public:
 		headlessBody.pop_front();
 		if (ElementInDeque(snake.body[0], headlessBody))
 		{
+			PlaySound(tailSound);
 			GameOver();
 		}
 	}
@@ -184,6 +190,7 @@ public:
 		cout << "Game Over!" << endl;
 		gameRunning = false;
 		// score = 0;
+		StopMusicStream(music);
 	}
 	void CheckCollisionWithFood()
 	{
@@ -218,6 +225,8 @@ int main()
 
 	while (WindowShouldClose() == false)
 	{
+		UpdateMusicStream(game.music);
+
 		BeginDrawing();
 
 		if (eventTriggered(0.5))
