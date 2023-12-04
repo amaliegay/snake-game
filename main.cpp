@@ -1,4 +1,4 @@
-#include "Game.hpp"
+#include "Game.h"
 
 #define N 20
 #define HEIGHT N
